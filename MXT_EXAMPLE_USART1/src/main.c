@@ -440,7 +440,7 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 				}
 				
 				if(tx >= next_BUTTON_X - next_BUTTON_W/2 && tx <= next_BUTTON_X + next_BUTTON_W/2 && ty >= next_BUTTON_Y - next_BUTTON_H/2 && ty <= next_BUTTON_Y + next_BUTTON_H/2) {
-					p_primeiro = p_primeiro->previous;
+					p_primeiro = p_primeiro->next;
 					
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
 					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 370);

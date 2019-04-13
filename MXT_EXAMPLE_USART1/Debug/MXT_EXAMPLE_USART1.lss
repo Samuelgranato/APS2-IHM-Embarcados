@@ -5975,10 +5975,10 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
   402312:	f1a5 01dc 	sub.w	r1, r5, #220	; 0xdc
   402316:	2928      	cmp	r1, #40	; 0x28
   402318:	d8ca      	bhi.n	4022b0 <update_screen+0x44>
-					p_primeiro = p_primeiro->previous;
+					p_primeiro = p_primeiro->next;
   40231a:	4c34      	ldr	r4, [pc, #208]	; (4023ec <update_screen+0x180>)
   40231c:	6823      	ldr	r3, [r4, #0]
-  40231e:	6b5b      	ldr	r3, [r3, #52]	; 0x34
+  40231e:	6b9b      	ldr	r3, [r3, #56]	; 0x38
   402320:	6023      	str	r3, [r4, #0]
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
   402322:	4833      	ldr	r0, [pc, #204]	; (4023f0 <update_screen+0x184>)
