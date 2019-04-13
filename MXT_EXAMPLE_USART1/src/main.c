@@ -390,59 +390,63 @@ void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
 	}
 }
 
-void update_screen(uint32_t tx, uint32_t ty) {
+void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
+
 	
-	//update left button
-		
-	if(tx >= left_BUTTON_X-left_BUTTON_W/2 && tx <= left_BUTTON_X + left_BUTTON_W/2) {
-		if(ty >= left_BUTTON_Y-left_BUTTON_H/2 && ty <= left_BUTTON_Y) {
-			draw_left_button(1);
-			if(led_flag == 0){
-				pin_toggle(LED_PIO, LED_IDX_MASK);  
-				led_flag = 1;
-			}
-			
-			} else if(ty > left_BUTTON_Y && ty < left_BUTTON_Y + left_BUTTON_H/2) {
-				if(led_flag == 1){
-					pin_toggle(LED_PIO, LED_IDX_MASK);  
-					led_flag = 0;
+	if(status == 0x20)
+			{
+				//update left button
+				
+				if(tx >= left_BUTTON_X-left_BUTTON_W/2 && tx <= left_BUTTON_X + left_BUTTON_W/2) {
+					if(ty >= left_BUTTON_Y-left_BUTTON_H/2 && ty <= left_BUTTON_Y) {
+						draw_left_button(1);
+						if(led_flag == 0){
+							pin_toggle(LED_PIO, LED_IDX_MASK);
+							led_flag = 1;
+						}
+						
+						} else if(ty > left_BUTTON_Y && ty < left_BUTTON_Y + left_BUTTON_H/2) {
+						if(led_flag == 1){
+							pin_toggle(LED_PIO, LED_IDX_MASK);
+							led_flag = 0;
+						}
+						draw_left_button(0);
+					}
 				}
-			draw_left_button(0);
-		}
-	}
-	
-	//update right button
-	if(tx >= right_BUTTON_X-right_BUTTON_W/2 && tx <= right_BUTTON_X + right_BUTTON_W/2) {
-		if(ty >= right_BUTTON_Y-right_BUTTON_H/2 && ty <= right_BUTTON_Y) {
-			draw_right_button(1);
-			if(led_flag == 0){
-				pin_toggle(LED_PIO, LED_IDX_MASK);
-				led_flag = 1;
+				
+				//update right button
+				if(tx >= right_BUTTON_X-right_BUTTON_W/2 && tx <= right_BUTTON_X + right_BUTTON_W/2) {
+					if(ty >= right_BUTTON_Y-right_BUTTON_H/2 && ty <= right_BUTTON_Y) {
+						draw_right_button(1);
+						if(led_flag == 0){
+							pin_toggle(LED_PIO, LED_IDX_MASK);
+							led_flag = 1;
+						}
+						} else if(ty > right_BUTTON_Y && ty < right_BUTTON_Y + right_BUTTON_H/2) {
+						draw_right_button(0);
+						if(led_flag == 1){
+							pin_toggle(LED_PIO, LED_IDX_MASK);
+							led_flag = 0;
+						}
+					}
+				}
+				
+				if(tx >= previous_BUTTON_X - previous_BUTTON_W/2 && tx <= previous_BUTTON_X + previous_BUTTON_W/2 && ty >= previous_BUTTON_Y - previous_BUTTON_H/2 && ty <= previous_BUTTON_Y + previous_BUTTON_H/2) {
+					p_primeiro = p_primeiro->previous;
+					
+					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 370);
+					font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
+				}
+				
+				if(tx >= next_BUTTON_X - next_BUTTON_W/2 && tx <= next_BUTTON_X + next_BUTTON_W/2 && ty >= next_BUTTON_Y - next_BUTTON_H/2 && ty <= next_BUTTON_Y + next_BUTTON_H/2) {
+					p_primeiro = p_primeiro->previous;
+					
+					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 370);
+					font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
+				}
 			}
-		} else if(ty > right_BUTTON_Y && ty < right_BUTTON_Y + right_BUTTON_H/2) {
-			draw_right_button(0);
-			if(led_flag == 1){
-				pin_toggle(LED_PIO, LED_IDX_MASK);
-				led_flag = 0;
-			}
-		}
-	}
-	
-	if(tx >= previous_BUTTON_X && tx <= previous_BUTTON_X + previous_BUTTON_W && ty >= previous_BUTTON_Y && ty <= previous_BUTTON_Y + previous_BUTTON_H ) {
-		p_primeiro = p_primeiro->previous;
-		
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-		ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 370);
-		font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
-	}
-	
-	if(tx >= next_BUTTON_X && tx <= next_BUTTON_X + next_BUTTON_W && ty >= next_BUTTON_Y && ty <= next_BUTTON_Y + next_BUTTON_H ) {
-		p_primeiro = p_primeiro->previous;
-		
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-		ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 370);
-		font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
-	}
 	
 
 }
@@ -475,7 +479,7 @@ void mxt_handler(struct mxt_device *device)
 		sprintf(buf, "Nr: %1d, X:%4d, Y:%4d, Status:0x%2x conv X:%3d Y:%3d\n\r",
 				touch_event.id, touch_event.x, touch_event.y,
 				touch_event.status, conv_x, conv_y);
-		update_screen(conv_x, conv_y);
+		update_screen(conv_x, conv_y,touch_event.status);
 
 		/* Add the new string to the string buffer */
 		strcat(tx_buf, buf);
