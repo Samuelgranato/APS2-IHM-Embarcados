@@ -164,6 +164,21 @@ void pin_toggle(Pio *pio, uint32_t mask);
 
 int led_flag = 0;
 
+void draw_left_button(uint32_t clicked) {
+	static uint32_t last_state = 255; // undefined
+	if(clicked == last_state) return;
+	
+	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_BLACK));
+	ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2, left_BUTTON_Y-left_BUTTON_H/2, left_BUTTON_X+left_BUTTON_W/2, left_BUTTON_Y+left_BUTTON_H/2);
+	if(clicked) {
+		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_TOMATO));
+		ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2+BUTTON_BORDER, left_BUTTON_Y+BUTTON_BORDER, left_BUTTON_X+left_BUTTON_W/2-BUTTON_BORDER, left_BUTTON_Y+left_BUTTON_H/2-BUTTON_BORDER);
+		} else {
+		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_GREEN));
+		ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2+BUTTON_BORDER, left_BUTTON_Y-left_BUTTON_H/2+BUTTON_BORDER, left_BUTTON_X+left_BUTTON_W/2-BUTTON_BORDER, left_BUTTON_Y-BUTTON_BORDER);
+	}
+	last_state = clicked;
+}
 
 void increment_time(){
 	segundos -=1;
@@ -188,6 +203,8 @@ void increment_time(){
 			segundos = 0;
 			minutos = 0;
 			horas = 0;
+			isRunning = 0;
+			draw_left_button(0);
 		}
 	}
 }
@@ -212,8 +229,10 @@ void print_time(){
 	if(isRunning == 0)
 	{
 		minutos = p_primeiro->enxagueTempo * p_primeiro->enxagueQnt + p_primeiro->centrifugacaoTempo;
+		minutos = 0; //teste
 		horas = 0;
-		segundos =0;
+		segundos = 0;
+		segundos = 5; //teste
 	}
 	
 	sprintf(string_segundos,"%d",segundos);
@@ -473,21 +492,6 @@ void draw_previous_button(uint32_t clicked) {
 	
 	
 }
-void draw_left_button(uint32_t clicked) {
-	static uint32_t last_state = 255; // undefined
-	if(clicked == last_state) return;
-	
-	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_BLACK));
-	ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2, left_BUTTON_Y-left_BUTTON_H/2, left_BUTTON_X+left_BUTTON_W/2, left_BUTTON_Y+left_BUTTON_H/2);
-	if(clicked) {
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_TOMATO));
-		ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2+BUTTON_BORDER, left_BUTTON_Y+BUTTON_BORDER, left_BUTTON_X+left_BUTTON_W/2-BUTTON_BORDER, left_BUTTON_Y+left_BUTTON_H/2-BUTTON_BORDER);
-		} else {
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_GREEN));
-		ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2+BUTTON_BORDER, left_BUTTON_Y-left_BUTTON_H/2+BUTTON_BORDER, left_BUTTON_X+left_BUTTON_W/2-BUTTON_BORDER, left_BUTTON_Y-BUTTON_BORDER);
-	}
-	last_state = clicked;
-}
 
 
 
@@ -532,14 +536,14 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 				if(tx >= left_BUTTON_X-left_BUTTON_W/2 && tx <= left_BUTTON_X + left_BUTTON_W/2) {
 					if(ty >= left_BUTTON_Y-left_BUTTON_H/2 && ty <= left_BUTTON_Y) {
 						draw_left_button(1);
-						if(led_flag == 0){
+						if(isRunning == 0){
 							pin_toggle(LED_PIO, LED_IDX_MASK);
 							led_flag = 1;
 							isRunning =1;
 						}
 						
 						} else if(ty > left_BUTTON_Y && ty < left_BUTTON_Y + left_BUTTON_H/2) {
-						if(led_flag == 1){
+						if(isRunning == 1){
 							pin_toggle(LED_PIO, LED_IDX_MASK);
 							led_flag = 0;
 							isRunning = 0;
