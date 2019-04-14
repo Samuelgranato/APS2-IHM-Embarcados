@@ -106,6 +106,28 @@
 #define LED_IDX       8u
 #define LED_IDX_MASK  (1u << LED_IDX)
 
+#define YEAR        2018
+#define MOUNT       3
+#define DAY         19
+#define WEEK        12
+#define HOUR        15
+#define MINUTE      45
+#define SECOND      0
+
+int segundos = 55;
+int	minutos = 0;
+int horas = 0;
+
+char string_segundos[32];
+char string_minutos[32];
+char string_horas[32];
+
+int isRunning = 0;
+
+volatile Bool f_rtt_alarme = false;
+static void RTT_init(uint16_t pllPreScale, uint32_t IrqNPulses);
+
+
 struct ili9488_opt_t g_ili9488_display_opt;
 //const uint32_t BUTTON_W = 120;
 //const uint32_t BUTTON_H = 150;
@@ -122,8 +144,6 @@ const uint32_t next_BUTTON_H = 40;
 const uint32_t left_BUTTON_W = 80;
 const uint32_t left_BUTTON_H = 100;
 
-const uint32_t right_BUTTON_W = 80;
-const uint32_t right_BUTTON_H = 100;
 
 const uint32_t previous_BUTTON_X = ILI9488_LCD_WIDTH/3;
 const uint32_t previous_BUTTON_Y = 1.5*ILI9488_LCD_HEIGHT/3;
@@ -134,8 +154,6 @@ const uint32_t next_BUTTON_Y = 1.5*ILI9488_LCD_HEIGHT/3;
 const uint32_t left_BUTTON_X = ILI9488_LCD_WIDTH/3;
 const uint32_t left_BUTTON_Y = ILI9488_LCD_HEIGHT/3;
 
-const uint32_t right_BUTTON_X = 2*ILI9488_LCD_WIDTH/3;
-const uint32_t right_BUTTON_Y = ILI9488_LCD_HEIGHT/3;
 
 //const uint32_t BUTTON_X = ILI9488_LCD_WIDTH/2;
 //const uint32_t BUTTON_Y = ILI9488_LCD_HEIGHT/2;
@@ -147,7 +165,122 @@ void pin_toggle(Pio *pio, uint32_t mask);
 int led_flag = 0;
 
 
+void increment_time(){
+	segundos -=1;
+	if(segundos < 0){
+		segundos = 59;
+		
+		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+		ili9488_draw_filled_rectangle(40, 380, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
+		
+		minutos -=1;
+		
+		if(minutos < 0 ){
+			minutos = 59;
+			
+			ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+			ili9488_draw_filled_rectangle(40, 380, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
+			
+			horas-=1;
+		}
+		if(horas < 0){
+			pin_toggle(LED_PIO,LED_IDX_MASK);
+			segundos = 0;
+			minutos = 0;
+			horas = 0;
+		}
+	}
+}
+
+void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
+	char *p = text;
+	while(*p != NULL) {
+		char letter = *p;
+		int letter_offset = letter - font->start_char;
+		if(letter <= font->end_char) {
+			tChar *current_char = font->chars + letter_offset;
+			ili9488_draw_pixmap(x, y, current_char->image->width, current_char->image->height, current_char->image->data);
+			x += current_char->image->width + spacing;
+		}
+		p++;
+	}
+}
+
+void print_time(){
+
 	
+	if(isRunning == 0)
+	{
+		minutos = p_primeiro->enxagueTempo * p_primeiro->enxagueQnt + p_primeiro->centrifugacaoTempo;
+		horas = 0;
+		segundos =0;
+	}
+	
+	sprintf(string_segundos,"%d",segundos);
+	sprintf(string_minutos,"%d",minutos);
+	sprintf(string_horas,"%d",horas);
+	
+	char buf[256];
+	//sprintf(buf, sizeof buf, "%s%s%s%s%s", string_horas, "a", string_minutos, "a",string_segundos);
+	//sprintf(buf,"%sh%s:%s",string_horas,string_minutos,string_segundos);
+				
+	if(strlen(string_horas) == 1){
+		sprintf(buf,"0%s",string_horas);
+		}else{
+		sprintf(buf,"%s",string_horas);
+	}
+	if(strlen(string_minutos) == 1){
+		sprintf(buf,"%s:0%s",buf,string_minutos);
+		}else{
+		sprintf(buf,"%s:%s",buf,string_minutos);
+	}
+	if(strlen(string_segundos) == 1){
+		sprintf(buf,"%s:0%s",buf,string_segundos);
+		}else{
+		sprintf(buf,"%s:%s",buf,string_segundos);
+					
+	}
+				
+				
+				
+	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+	font_draw_text(&calibri_36, buf,40, 380, 2);
+	//font_draw_text(&arial_72, string_minutos,130, 380, 2);
+	//font_draw_text(&arial_72, string_segundos,220, 380, 2);
+}
+
+void RTT_Handler(void)
+{
+	//if(pulsos == idle_lastPulse){
+		//idle_count +=1;
+		//if(idle_count == 20){
+			//idle_mode();
+		//}
+		//}else{
+		//idle_count = 0;
+	//}
+	uint32_t ul_status;
+	
+	/* Get RTT status */
+	ul_status = rtt_get_status(RTT);
+	
+	/* IRQ due to Time has changed */
+	if ((ul_status & RTT_SR_RTTINC) == RTT_SR_RTTINC) {  }
+	
+	/* IRQ due to Alarm */
+	if ((ul_status & RTT_SR_ALMS) == RTT_SR_ALMS) {
+		//pin_toggle(LED_PIO, LED_IDX_MASK);    // BLINK Led
+		f_rtt_alarme = true;                  // flag RTT alarme
+		
+		if(isRunning==1)
+			{
+				increment_time();
+				print_time();
+			}
+	}
+
+}
+
 static void configure_lcd(void){
 	/* Initialize display parameter */
 	g_ili9488_display_opt.ul_width = ILI9488_LCD_WIDTH;
@@ -157,6 +290,31 @@ static void configure_lcd(void){
 
 	/* Initialize LCD */
 	ili9488_init(&g_ili9488_display_opt);
+}
+
+static float get_time_rtt(){
+	uint ul_previous_time = rtt_read_timer_value(RTT);
+}
+
+static void RTT_init(uint16_t pllPreScale, uint32_t IrqNPulses)
+{
+	uint32_t ul_previous_time;
+
+	/* Configure RTT for a 1 second tick interrupt */
+	rtt_sel_source(RTT, false);
+	rtt_init(RTT, pllPreScale);
+	
+	ul_previous_time = rtt_read_timer_value(RTT);
+	while (ul_previous_time == rtt_read_timer_value(RTT));
+	
+	rtt_write_alarm_time(RTT, IrqNPulses+ul_previous_time);
+
+	/* Enable RTT interrupt */
+	NVIC_DisableIRQ(RTT_IRQn);
+	NVIC_ClearPendingIRQ(RTT_IRQn);
+	NVIC_SetPriority(RTT_IRQn, 5);
+	NVIC_EnableIRQ(RTT_IRQn);
+	rtt_enable_interrupt(RTT, RTT_MR_ALMIEN);
 }
 
 
@@ -331,21 +489,7 @@ void draw_left_button(uint32_t clicked) {
 	last_state = clicked;
 }
 
-void draw_right_button(uint32_t clicked) {
-	static uint32_t last_state = 255; // undefined
-	if(clicked == last_state) return;
-	
-	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_BLACK));
-	ili9488_draw_filled_rectangle(right_BUTTON_X-right_BUTTON_W/2, right_BUTTON_Y-right_BUTTON_H/2, right_BUTTON_X+right_BUTTON_W/2, right_BUTTON_Y+right_BUTTON_H/2);
-	if(clicked) {
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_TOMATO));
-		ili9488_draw_filled_rectangle(right_BUTTON_X-right_BUTTON_W/2+BUTTON_BORDER, right_BUTTON_Y+BUTTON_BORDER, right_BUTTON_X+right_BUTTON_W/2-BUTTON_BORDER, right_BUTTON_Y+right_BUTTON_H/2-BUTTON_BORDER);
-		} else {
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_GREEN));
-		ili9488_draw_filled_rectangle(right_BUTTON_X-right_BUTTON_W/2+BUTTON_BORDER, right_BUTTON_Y-right_BUTTON_H/2+BUTTON_BORDER, right_BUTTON_X+right_BUTTON_W/2-BUTTON_BORDER, right_BUTTON_Y-BUTTON_BORDER);
-	}
-	last_state = clicked;
-}
+
 
 void io_init(void){
 
@@ -376,19 +520,7 @@ void pin_toggle(Pio *pio, uint32_t mask){
 	}
 }
 
-void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
-	char *p = text;
-	while(*p != NULL) {
-		char letter = *p;
-		int letter_offset = letter - font->start_char;
-		if(letter <= font->end_char) {
-			tChar *current_char = font->chars + letter_offset;
-			ili9488_draw_pixmap(x, y, current_char->image->width, current_char->image->height, current_char->image->data);
-			x += current_char->image->width + spacing;
-		}
-		p++;
-	}
-}
+
 
 void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 
@@ -403,48 +535,38 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 						if(led_flag == 0){
 							pin_toggle(LED_PIO, LED_IDX_MASK);
 							led_flag = 1;
+							isRunning =1;
 						}
 						
 						} else if(ty > left_BUTTON_Y && ty < left_BUTTON_Y + left_BUTTON_H/2) {
 						if(led_flag == 1){
 							pin_toggle(LED_PIO, LED_IDX_MASK);
 							led_flag = 0;
+							isRunning = 0;
 						}
 						draw_left_button(0);
 					}
 				}
 				
-				//update right button
-				if(tx >= right_BUTTON_X-right_BUTTON_W/2 && tx <= right_BUTTON_X + right_BUTTON_W/2) {
-					if(ty >= right_BUTTON_Y-right_BUTTON_H/2 && ty <= right_BUTTON_Y) {
-						draw_right_button(1);
-						if(led_flag == 0){
-							pin_toggle(LED_PIO, LED_IDX_MASK);
-							led_flag = 1;
-						}
-						} else if(ty > right_BUTTON_Y && ty < right_BUTTON_Y + right_BUTTON_H/2) {
-						draw_right_button(0);
-						if(led_flag == 1){
-							pin_toggle(LED_PIO, LED_IDX_MASK);
-							led_flag = 0;
-						}
-					}
-				}
 				
-				if(tx >= previous_BUTTON_X - previous_BUTTON_W/2 && tx <= previous_BUTTON_X + previous_BUTTON_W/2 && ty >= previous_BUTTON_Y - previous_BUTTON_H/2 && ty <= previous_BUTTON_Y + previous_BUTTON_H/2) {
+				
+				if(tx >= previous_BUTTON_X - previous_BUTTON_W/2 && tx <= previous_BUTTON_X + previous_BUTTON_W/2 && ty >= previous_BUTTON_Y - previous_BUTTON_H/2 && ty <= previous_BUTTON_Y + previous_BUTTON_H/2 && isRunning == 0) {
 					p_primeiro = p_primeiro->previous;
 					
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 370);
+					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 380);
 					font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
+					print_time();
 				}
 				
-				if(tx >= next_BUTTON_X - next_BUTTON_W/2 && tx <= next_BUTTON_X + next_BUTTON_W/2 && ty >= next_BUTTON_Y - next_BUTTON_H/2 && ty <= next_BUTTON_Y + next_BUTTON_H/2) {
+				if(tx >= next_BUTTON_X - next_BUTTON_W/2 && tx <= next_BUTTON_X + next_BUTTON_W/2 && ty >= next_BUTTON_Y - next_BUTTON_H/2 && ty <= next_BUTTON_Y + next_BUTTON_H/2 && isRunning == 0) {
 					p_primeiro = p_primeiro->next;
 					
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 370);
+					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 380);
 					font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
+					print_time();
+					
 				}
 			}
 	
@@ -508,14 +630,15 @@ int main(void)
 		.paritytype   = USART_SERIAL_PARITY,
 		.stopbits     = USART_SERIAL_STOP_BIT
 	};
+	
+	f_rtt_alarme = true;
+	
 
 	sysclk_init(); /* Initialize system clocks */
 	board_init();  /* Initialize board */
 	configure_lcd();
 	draw_screen();
 	io_init();
-	//draw_button(0);
-	draw_right_button(0);
 	draw_left_button(0);
 	
 	draw_next_button(0);
@@ -524,6 +647,8 @@ int main(void)
 	mxt_init(&device);
 	
 	p_primeiro = initMenuOrder();
+	print_time();
+	
 		
 	font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
 	
@@ -536,11 +661,56 @@ int main(void)
 
 	while (true) {
 	
+		
+		if (f_rtt_alarme){
+      
+		  /*
+		   * O clock base do RTT é 32678Hz
+		   * Para gerar outra base de tempo é necessário
+		   * usar o PLL pre scale, que divide o clock base.
+		   *
+		   * Nesse exemplo, estamos operando com um clock base
+		   * de pllPreScale = 32768/32768/2 = 2Hz
+		   *
+		   * Quanto maior a frequência maior a resolução, porém
+		   * menor o tempo máximo que conseguimos contar.
+		   *
+		   * Podemos configurar uma IRQ para acontecer quando 
+		   * o contador do RTT atingir um determinado valor
+		   * aqui usamos o irqRTTvalue para isso.
+		   * 
+		   * Nesse exemplo o irqRTTvalue = 8, causando uma
+		   * interrupção a cada 2 segundos (lembre que usamos o 
+		   * pllPreScale, cada incremento do RTT leva 500ms (2Hz).
+		   */
+		  uint16_t pllPreScale = (int) (((float) 32768) / 32.0);
+		  uint32_t irqRTTvalue  = 32;
+      
+		  // reinicia RTT para gerar um novo IRQ
+		  RTT_init(pllPreScale, irqRTTvalue);
+		 
+		  
+		  
+      
+		 /*
+		  * caso queira ler o valor atual do RTT, basta usar a funcao
+		  *   rtt_read_timer_value()
+		  */
+      
+		  /*
+		   * CLEAR FLAG
+		   */
+		  f_rtt_alarme = false;
+		}
+		
 		/* Check for any pending messages and run message handler if any
 		 * message is found in the queue */
 		if (mxt_is_message_pending(&device)) {
 			mxt_handler(&device);
 		}
+		 //pmc_sleep(SAM_PM_SMODE_SLEEP_WFI);
+		 
+		
 		
 	}
 
