@@ -142,6 +142,11 @@ char string_minutos[32];
 char string_horas[32];
 
 int isRunning = 0;
+int isPressingLock = 0;
+int isPressingLockCount = 0;
+int isLocked = 0;
+char test[32];
+
 
 volatile Bool f_rtt_alarme = false;
 static void RTT_init(uint16_t pllPreScale, uint32_t IrqNPulses);
@@ -163,9 +168,10 @@ const uint32_t left_BUTTON_W = 93;
 const uint32_t left_BUTTON_H = 93;
 
 const uint32_t x_timer = 60;
-const uint32_t y_timer = 180;
+const uint32_t y_timer = 160;
 
-
+const uint32_t x_lock = 190;
+const uint32_t y_lock = 30;
 
 const uint32_t proximo_x = 200;
 const uint32_t proximo_y = 370;
@@ -207,8 +213,76 @@ void draw_left_button(uint32_t clicked) {
 	last_state = clicked;
 }
 
+void draw_mode_icon(){
+	if (p_primeiro==0x20400088){
+		ili9488_draw_pixmap(90,210, enxague.width, enxague.height, enxague.data);
+	}
+	if (p_primeiro==0x20400100){
+		ili9488_draw_pixmap(90,210, rapido.width, rapido.height, rapido.data);
+	}
+	if (p_primeiro==0x20400010){
+		ili9488_draw_pixmap(90,210, centrifuga.width, centrifuga.height, centrifuga.data);
+	}
+	if (p_primeiro==0x2040004c){
+		ili9488_draw_pixmap(90,210, diario.width, diario.height, diario.data);
+	}
+	if (p_primeiro==0x204000c4){
+		ili9488_draw_pixmap(90,210, pesado.width, pesado.height, pesado.data);
+	}
+}
+
+void draw_lock(){
+	if(isLocked == 0)	{
+		//subsituir aqui para o cadeado aberto
+		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+		ili9488_draw_filled_rectangle(x_lock, y_lock, x_lock+lock.width, y_lock+lock.height+20);
+		ili9488_draw_pixmap(x_lock, y_lock, lock.width, lock.height, lock.data);
+					
+					
+		
+	}else{
+		//arrumar aqui quando tiver o icone do cadeado aberto
+		ili9488_draw_filled_rectangle(x_lock, y_lock, x_lock+lock.width, y_lock+lock.height+20);
+		ili9488_draw_pixmap(x_lock, y_lock+20, lock.width, lock.height, lock.data);	
+	
+	}
+}
+void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
+	char *p = text;
+	while(*p != NULL) {
+		char letter = *p;
+		int letter_offset = letter - font->start_char;
+		if(letter <= font->end_char) {
+			tChar *current_char = font->chars + letter_offset;
+			ili9488_draw_pixmap(x, y, current_char->image->width, current_char->image->height, current_char->image->data);
+			x += current_char->image->width + spacing;
+		}
+		p++;
+	}
+}
+
 void increment_time(){
-	segundos -=1;
+	if(isRunning){
+		segundos -=1;
+	}
+	if(isPressingLock){
+		isPressingLockCount +=1;		
+		if(isPressingLockCount == 5){
+			isLocked = !isLocked;
+			draw_lock();
+	
+			
+			isPressingLock = 0;
+			isPressingLockCount = 0;	
+		}
+	}else{
+		isPressingLockCount = 0;
+	}
+	sprintf(test,"%d",isPressingLockCount);
+	font_draw_text(&calibri_36,test ,x_lock	, y_lock+40,2);
+					
+
+	
 	if(segundos < 0){
 		segundos = 59;
 		
@@ -232,23 +306,17 @@ void increment_time(){
 			horas = 0;
 			isRunning = 0;
 			draw_left_button(0);
+			ili9488_draw_pixmap(proximo_x, proximo_y, proximo.width, proximo.height, proximo.data);
+			ili9488_draw_pixmap(anterior_x, anterior_y, anterior.width, anterior.height, anterior.data);
+			ili9488_draw_pixmap(play_stop_x, play_stop_y, play.width, play.height, play.data);
+			draw_mode_icon();
+
+			
 		}
 	}
 }
 
-void font_draw_text(tFont *font, const char *text, int x, int y, int spacing) {
-	char *p = text;
-	while(*p != NULL) {
-		char letter = *p;
-		int letter_offset = letter - font->start_char;
-		if(letter <= font->end_char) {
-			tChar *current_char = font->chars + letter_offset;
-			ili9488_draw_pixmap(x, y, current_char->image->width, current_char->image->height, current_char->image->data);
-			x += current_char->image->width + spacing;
-		}
-		p++;
-	}
-}
+
 
 void print_time(){
 
@@ -259,7 +327,7 @@ void print_time(){
 		minutos = 0; //teste
 		horas = 0;
 		segundos = 0;
-		segundos = 5; //teste
+		segundos = 11; //teste
 	}
 	
 	sprintf(string_segundos,"%d",segundos);
@@ -293,8 +361,8 @@ void print_time(){
 	font_draw_text(&calibri_36, buf,x_timer, y_timer, 2);
 	font_draw_text(&calibri_36,p_primeiro->nome ,50	, 340,2);
 	/*Draw dos icones*/
-	ili9488_draw_pixmap(proximo_x, proximo_y, proximo.width, proximo.height, proximo.data);
-	ili9488_draw_pixmap(anterior_x, anterior_y, anterior.width, anterior.height, anterior.data);
+	//ili9488_draw_pixmap(proximo_x, proximo_y, proximo.width, proximo.height, proximo.data);
+	//ili9488_draw_pixmap(anterior_x, anterior_y, anterior.width, anterior.height, anterior.data);
 
 	//font_draw_text(&arial_72, string_minutos,130, 380, 2);
 	//font_draw_text(&arial_72, string_segundos,220, 380, 2);
@@ -323,7 +391,7 @@ void RTT_Handler(void)
 		//pin_toggle(LED_PIO, LED_IDX_MASK);    // BLINK Led
 		f_rtt_alarme = true;                  // flag RTT alarme
 		
-		if(isRunning==1)
+		if(isRunning==1 || isPressingLock)
 			{
 				increment_time();
 				print_time();
@@ -565,28 +633,28 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 			{
 				//update left button
 				
-				if(tx >= left_BUTTON_X-left_BUTTON_W/2 && tx <= left_BUTTON_X + left_BUTTON_W/2) {
-					if(ty >= left_BUTTON_Y-left_BUTTON_H/2 && ty <= left_BUTTON_Y) {
-						draw_left_button(1);
+					if(tx >= play_stop_x && tx <= play_stop_x + play.width && ty >= play_stop_y && ty <= play_stop_y + play.height && isLocked == 0) {
 						if(isRunning == 0){
 							pin_toggle(LED_PIO, LED_IDX_MASK);
 							led_flag = 1;
 							isRunning =1;
+							draw_left_button(1);
+						}else{
+							if(isRunning == 1){
+								pin_toggle(LED_PIO, LED_IDX_MASK);
+								led_flag = 0;
+								isRunning = 0;
+								draw_left_button(0);
+							}
 						}
-						
-						} else if(ty > left_BUTTON_Y && ty < left_BUTTON_Y + left_BUTTON_H/2) {
-						if(isRunning == 1){
-							pin_toggle(LED_PIO, LED_IDX_MASK);
-							led_flag = 0;
-							isRunning = 0;
-						}
-						draw_left_button(0);
 					}
-				}
+
+					
+	
 				
 				
 				
-				if(tx >= previous_BUTTON_X - previous_BUTTON_W/2 && tx <= previous_BUTTON_X + previous_BUTTON_W/2 && ty >= previous_BUTTON_Y - previous_BUTTON_H/2 && ty <= previous_BUTTON_Y + previous_BUTTON_H/2 && isRunning == 0) {
+				if(tx >= previous_BUTTON_X - previous_BUTTON_W/2 && tx <= previous_BUTTON_X + previous_BUTTON_W/2 && ty >= previous_BUTTON_Y - previous_BUTTON_H/2 && ty <= previous_BUTTON_Y + previous_BUTTON_H/2 && isRunning == 0 && isLocked == 0) {
 					p_primeiro = p_primeiro->previous;
 					
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
@@ -595,7 +663,7 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 					print_time();
 				}
 				
-				if(tx >= next_BUTTON_X - next_BUTTON_W/2 && tx <= next_BUTTON_X + next_BUTTON_W/2 && ty >= next_BUTTON_Y - next_BUTTON_H/2 && ty <= next_BUTTON_Y + next_BUTTON_H/2 && isRunning == 0) {
+				if(tx >= next_BUTTON_X - next_BUTTON_W/2 && tx <= next_BUTTON_X + next_BUTTON_W/2 && ty >= next_BUTTON_Y - next_BUTTON_H/2 && ty <= next_BUTTON_Y + next_BUTTON_H/2 && isRunning == 0 && isLocked == 0) {
 					p_primeiro = p_primeiro->next;
 					
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
@@ -604,21 +672,21 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 					print_time();
 					
 				}
-				if (p_primeiro==0x20400088){
-					ili9488_draw_pixmap(90,210, enxague.width, enxague.height, enxague.data);
+				draw_mode_icon();
+				
+				if(tx >= x_lock && tx <= x_lock + lock.width && ty >= y_lock && ty <= y_lock+ lock.height) {
+					isPressingLock = 0;
+					isPressingLockCount = 0;
+					font_draw_text(&calibri_36,"0" ,x_lock	, y_lock,2);
+					
 				}
-				if (p_primeiro==0x20400100){
-					ili9488_draw_pixmap(90,210, rapido.width, rapido.height, rapido.data);
+			}else{
+				if(tx >= x_lock && tx <= x_lock + lock.width && ty >= y_lock && ty <= y_lock+ lock.height) {
+					isPressingLock = 1;
+					font_draw_text(&calibri_36,"1" ,x_lock	, y_lock,2);
+					
 				}
-				if (p_primeiro==0x20400010){
-					ili9488_draw_pixmap(90,210, centrifuga.width, centrifuga.height, centrifuga.data);
-				}
-				if (p_primeiro==0x2040004c){
-					ili9488_draw_pixmap(90,210, diario.width, diario.height, diario.data);
-				}
-				if (p_primeiro==0x204000c4){
-					ili9488_draw_pixmap(90,210, pesado.width, pesado.height, pesado.data);
-				}
+						
 			}
 	
 
@@ -692,6 +760,8 @@ int main(void)
 	io_init();
 	draw_left_button(0);
 	
+	pio_set(LED_PIO,LED_IDX_MASK);
+	draw_lock();
 	draw_next_button(0);
 	draw_previous_button(0);
 	/* Initialize the mXT touch device */
@@ -708,7 +778,6 @@ int main(void)
 	ili9488_draw_pixmap(anterior_x, anterior_y, anterior.width, anterior.height, anterior.data);
 	ili9488_draw_pixmap(play_stop_x, play_stop_y, play.width, play.height, play.data);
 	ili9488_draw_pixmap(90,210, diario.width, diario.height, diario.data);
-	ili9488_draw_pixmap(190, 30, lock.width, lock.height, lock.data);
 	
 	
 	/* Initialize stdio on USART */
