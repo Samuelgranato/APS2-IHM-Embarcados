@@ -106,6 +106,25 @@
 #define LED_IDX       8u
 #define LED_IDX_MASK  (1u << LED_IDX)
 
+	/* IMAGENS DEFINE */
+ typedef struct {
+	 const uint8_t *data;
+	 uint16_t width;
+	 uint16_t height;
+	 uint8_t dataSize;
+ } tImage2;
+ #include "icones/anterior.h"
+ #include "icones/proximo.h"
+ #include "icones/play.h"
+ #include "icones/stop.h"
+ #include "icones/enxague.h"
+ #include "icones/rapido.h"
+ #include "icones/centrifuga.h"
+ #include "icones/diario.h"
+ #include "icones/pesado.h"
+ #include "icones/lock.h"
+
+
 #define YEAR        2018
 #define MOUNT       3
 #define DAY         19
@@ -134,25 +153,37 @@ struct ili9488_opt_t g_ili9488_display_opt;
 
 t_ciclo *p_primeiro;
 
+const uint32_t previous_BUTTON_W = 93;
+const uint32_t previous_BUTTON_H = 93;
 
-const uint32_t previous_BUTTON_W = 80;
-const uint32_t previous_BUTTON_H = 40;
+const uint32_t next_BUTTON_W = 93;
+const uint32_t next_BUTTON_H = 93;
 
-const uint32_t next_BUTTON_W = 80;
-const uint32_t next_BUTTON_H = 40;
+const uint32_t left_BUTTON_W = 93;
+const uint32_t left_BUTTON_H = 93;
 
-const uint32_t left_BUTTON_W = 80;
-const uint32_t left_BUTTON_H = 100;
+const uint32_t x_timer = 60;
+const uint32_t y_timer = 180;
 
 
-const uint32_t previous_BUTTON_X = ILI9488_LCD_WIDTH/3;
-const uint32_t previous_BUTTON_Y = 1.5*ILI9488_LCD_HEIGHT/3;
 
-const uint32_t next_BUTTON_X = 2* ILI9488_LCD_WIDTH/3;
-const uint32_t next_BUTTON_Y = 1.5*ILI9488_LCD_HEIGHT/3;
+const uint32_t proximo_x = 200;
+const uint32_t proximo_y = 370;
 
-const uint32_t left_BUTTON_X = ILI9488_LCD_WIDTH/3;
-const uint32_t left_BUTTON_Y = ILI9488_LCD_HEIGHT/3;
+const uint32_t anterior_x = 30;
+const uint32_t anterior_y = 370;
+
+const uint32_t play_stop_x = 115;
+const uint32_t play_stop_y = 370;
+
+const uint32_t previous_BUTTON_X = 30+96/2;;
+const uint32_t previous_BUTTON_Y = 370+96/2;
+
+const uint32_t next_BUTTON_X = 200+96/2;
+const uint32_t next_BUTTON_Y = 370+96/2;
+
+const uint32_t left_BUTTON_X = 115+96/2;
+const uint32_t left_BUTTON_Y = 370+96/2;
 
 
 //const uint32_t BUTTON_X = ILI9488_LCD_WIDTH/2;
@@ -167,15 +198,11 @@ int led_flag = 0;
 void draw_left_button(uint32_t clicked) {
 	static uint32_t last_state = 255; // undefined
 	if(clicked == last_state) return;
-	
-	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_BLACK));
-	ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2, left_BUTTON_Y-left_BUTTON_H/2, left_BUTTON_X+left_BUTTON_W/2, left_BUTTON_Y+left_BUTTON_H/2);
+
 	if(clicked) {
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_TOMATO));
-		ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2+BUTTON_BORDER, left_BUTTON_Y+BUTTON_BORDER, left_BUTTON_X+left_BUTTON_W/2-BUTTON_BORDER, left_BUTTON_Y+left_BUTTON_H/2-BUTTON_BORDER);
+		ili9488_draw_pixmap(play_stop_x,play_stop_y, stop.width, stop.height, stop.data);
 		} else {
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_GREEN));
-		ili9488_draw_filled_rectangle(left_BUTTON_X-left_BUTTON_W/2+BUTTON_BORDER, left_BUTTON_Y-left_BUTTON_H/2+BUTTON_BORDER, left_BUTTON_X+left_BUTTON_W/2-BUTTON_BORDER, left_BUTTON_Y-BUTTON_BORDER);
+		ili9488_draw_pixmap(play_stop_x,play_stop_y, play.width, play.height, play.data);
 	}
 	last_state = clicked;
 }
@@ -186,7 +213,7 @@ void increment_time(){
 		segundos = 59;
 		
 		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-		ili9488_draw_filled_rectangle(40, 380, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
+		ili9488_draw_filled_rectangle(x_timer, y_timer, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
 		
 		minutos -=1;
 		
@@ -194,7 +221,7 @@ void increment_time(){
 			minutos = 59;
 			
 			ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-			ili9488_draw_filled_rectangle(40, 380, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
+			ili9488_draw_filled_rectangle(x_timer, y_timer, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
 			
 			horas-=1;
 		}
@@ -263,7 +290,12 @@ void print_time(){
 				
 				
 	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-	font_draw_text(&calibri_36, buf,40, 380, 2);
+	font_draw_text(&calibri_36, buf,x_timer, y_timer, 2);
+	font_draw_text(&calibri_36,p_primeiro->nome ,50	, 340,2);
+	/*Draw dos icones*/
+	ili9488_draw_pixmap(proximo_x, proximo_y, proximo.width, proximo.height, proximo.data);
+	ili9488_draw_pixmap(anterior_x, anterior_y, anterior.width, anterior.height, anterior.data);
+
 	//font_draw_text(&arial_72, string_minutos,130, 380, 2);
 	//font_draw_text(&arial_72, string_segundos,220, 380, 2);
 }
@@ -477,7 +509,7 @@ void draw_next_button(uint32_t clicked) {
 	static uint32_t last_state = 255; // undefined
 	if(clicked == last_state) return;
 	
-	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_BLACK));
+	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
 	ili9488_draw_filled_rectangle(next_BUTTON_X-next_BUTTON_W/2, next_BUTTON_Y-next_BUTTON_H/2, next_BUTTON_X+next_BUTTON_W/2, next_BUTTON_Y+next_BUTTON_H/2);
 	
 	
@@ -487,7 +519,7 @@ void draw_previous_button(uint32_t clicked) {
 	static uint32_t last_state = 255; // undefined
 	if(clicked == last_state) return;
 	
-	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_BLACK));
+	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
 	ili9488_draw_filled_rectangle(previous_BUTTON_X-previous_BUTTON_W/2, previous_BUTTON_Y-previous_BUTTON_H/2, previous_BUTTON_X+previous_BUTTON_W/2, previous_BUTTON_Y+previous_BUTTON_H/2);
 	
 	
@@ -558,8 +590,8 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 					p_primeiro = p_primeiro->previous;
 					
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 380);
-					font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
+					ili9488_draw_filled_rectangle(50,340, ILI9488_LCD_WIDTH-1, 380);
+					font_draw_text(&calibri_36,p_primeiro->nome ,50	, 340,2);
 					print_time();
 				}
 				
@@ -567,10 +599,25 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 					p_primeiro = p_primeiro->next;
 					
 					ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-					ili9488_draw_filled_rectangle(30,340, ILI9488_LCD_WIDTH-1, 380);
-					font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
+					ili9488_draw_filled_rectangle(50,340, ILI9488_LCD_WIDTH-1, 380);
+					font_draw_text(&calibri_36,p_primeiro->nome ,50	, 340,2);
 					print_time();
 					
+				}
+				if (p_primeiro==0x20400088){
+					ili9488_draw_pixmap(90,210, enxague.width, enxague.height, enxague.data);
+				}
+				if (p_primeiro==0x20400100){
+					ili9488_draw_pixmap(90,210, rapido.width, rapido.height, rapido.data);
+				}
+				if (p_primeiro==0x20400010){
+					ili9488_draw_pixmap(90,210, centrifuga.width, centrifuga.height, centrifuga.data);
+				}
+				if (p_primeiro==0x2040004c){
+					ili9488_draw_pixmap(90,210, diario.width, diario.height, diario.data);
+				}
+				if (p_primeiro==0x204000c4){
+					ili9488_draw_pixmap(90,210, pesado.width, pesado.height, pesado.data);
 				}
 			}
 	
@@ -654,7 +701,14 @@ int main(void)
 	print_time();
 	
 		
-	font_draw_text(&calibri_36,p_primeiro->nome ,30	, 340,2);
+	
+	font_draw_text(&calibri_36,p_primeiro->nome ,50	, 340,2);
+	/*Draw dos icones*/
+	ili9488_draw_pixmap(proximo_x, proximo_y, proximo.width, proximo.height, proximo.data);
+	ili9488_draw_pixmap(anterior_x, anterior_y, anterior.width, anterior.height, anterior.data);
+	ili9488_draw_pixmap(play_stop_x, play_stop_y, play.width, play.height, play.data);
+	ili9488_draw_pixmap(90,210, diario.width, diario.height, diario.data);
+	ili9488_draw_pixmap(190, 30, lock.width, lock.height, lock.data);
 	
 	
 	/* Initialize stdio on USART */

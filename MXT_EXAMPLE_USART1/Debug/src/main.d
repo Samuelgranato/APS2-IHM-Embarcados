@@ -182,7 +182,11 @@ src/main.d src/main.o: ../src/main.c ../src/asf.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\xlocale.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\sys\string.h \
  ../src/tfont.h ../src/maquina1.h ../src/calibri_36.h ../src/arial_72.h \
- ../src/config/conf_board.h ../src/config/conf_example.h
+ ../src/config/conf_board.h ../src/config/conf_example.h \
+ ../src/icones/anterior.h ../src/icones/proximo.h ../src/icones/play.h \
+ ../src/icones/stop.h ../src/icones/enxague.h ../src/icones/rapido.h \
+ ../src/icones/centrifuga.h ../src/icones/diario.h ../src/icones/pesado.h \
+ ../src/icones/lock.h
 
 ../src/asf.h:
 
@@ -579,3 +583,23 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 ../src/config/conf_board.h:
 
 ../src/config/conf_example.h:
+
+../src/icones/anterior.h:
+
+../src/icones/proximo.h:
+
+../src/icones/play.h:
+
+../src/icones/stop.h:
+
+../src/icones/enxague.h:
+
+../src/icones/rapido.h:
+
+../src/icones/centrifuga.h:
+
+../src/icones/diario.h:
+
+../src/icones/pesado.h:
+
+../src/icones/lock.h:
