@@ -236,14 +236,14 @@ void draw_lock(){
 	if(isLocked == 0)	{
 		
 		ili9488_draw_filled_rectangle(x_lock, y_lock, x_lock+lock.width, y_lock+lock.height+20);
-		ili9488_draw_pixmap(x_lock, y_lock, lock.width, lock.height, lock.data);
+		ili9488_draw_pixmap(x_lock, y_lock, unlocked.width, unlocked.height, unlocked.data);
 					
 					
 		
 	}else{
 		
 		ili9488_draw_filled_rectangle(x_lock, y_lock, x_lock+lock.width, y_lock+lock.height+20);
-		ili9488_draw_pixmap(x_lock, y_lock, unlocked.width, unlocked.height, unlocked.data);	
+		ili9488_draw_pixmap(x_lock, y_lock, lock.width, lock.height, lock.data);	
 	
 	}
 }
@@ -278,8 +278,8 @@ void increment_time(){
 	}else{
 		isPressingLockCount = 0;
 	}
-	sprintf(test,"%d",isPressingLockCount);
-	font_draw_text(&calibri_36,test ,x_lock	, y_lock+40,2);
+	//sprintf(test,"%d",isPressingLockCount);
+	//font_draw_text(&calibri_36,test ,x_lock	, y_lock+40,2);
 					
 
 	
@@ -287,7 +287,7 @@ void increment_time(){
 		segundos = 59;
 		
 		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-		ili9488_draw_filled_rectangle(x_timer, y_timer, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
+		ili9488_draw_filled_rectangle(x_timer, y_timer, ILI9488_LCD_WIDTH-1, y_timer+40);
 		
 		minutos -=1;
 		
@@ -295,7 +295,7 @@ void increment_time(){
 			minutos = 59;
 			
 			ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
-			ili9488_draw_filled_rectangle(x_timer, y_timer, ILI9488_LCD_WIDTH-1, ILI9488_LCD_HEIGHT-1);
+			ili9488_draw_filled_rectangle(x_timer, y_timer, ILI9488_LCD_WIDTH-1, y_timer+40);
 			
 			horas-=1;
 		}
@@ -324,10 +324,10 @@ void print_time(){
 	if(isRunning == 0)
 	{
 		minutos = p_primeiro->enxagueTempo * p_primeiro->enxagueQnt + p_primeiro->centrifugacaoTempo;
-		minutos = 0; //teste
+		//minutos = 0; //teste
 		horas = 0;
 		segundos = 0;
-		segundos = 11; //teste
+		//segundos = 11; //teste
 	}
 	
 	sprintf(string_segundos,"%d",segundos);
@@ -678,13 +678,13 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 				if(tx >= x_lock && tx <= x_lock + lock.width && ty >= y_lock && ty <= y_lock+ lock.height) {
 					isPressingLock = 0;
 					isPressingLockCount = 0;
-					font_draw_text(&calibri_36,"0" ,x_lock	, y_lock,2);
+					//font_draw_text(&calibri_36,"0" ,x_lock	, y_lock,2);
 					
 				}
 			}else{
 				if(tx >= x_lock && tx <= x_lock + lock.width && ty >= y_lock && ty <= y_lock+ lock.height) {
 					isPressingLock = 1;
-					font_draw_text(&calibri_36,"1" ,x_lock	, y_lock,2);
+					//font_draw_text(&calibri_36,"1" ,x_lock	, y_lock,2);
 					
 				}
 						
