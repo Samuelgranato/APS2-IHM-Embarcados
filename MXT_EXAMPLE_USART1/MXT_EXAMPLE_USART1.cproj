@@ -727,6 +727,9 @@
     <Compile Include="src\icones\stop.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\icones\unlocked.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\maquina1.h">
       <SubType>compile</SubType>
     </Compile>

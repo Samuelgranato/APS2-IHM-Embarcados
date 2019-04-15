@@ -123,6 +123,7 @@
  #include "icones/diario.h"
  #include "icones/pesado.h"
  #include "icones/lock.h"
+ #include "icones/unlocked.h"
 
 
 #define YEAR        2018
@@ -233,17 +234,16 @@ void draw_mode_icon(){
 
 void draw_lock(){
 	if(isLocked == 0)	{
-		//subsituir aqui para o cadeado aberto
-		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+		
 		ili9488_draw_filled_rectangle(x_lock, y_lock, x_lock+lock.width, y_lock+lock.height+20);
 		ili9488_draw_pixmap(x_lock, y_lock, lock.width, lock.height, lock.data);
 					
 					
 		
 	}else{
-		//arrumar aqui quando tiver o icone do cadeado aberto
+		
 		ili9488_draw_filled_rectangle(x_lock, y_lock, x_lock+lock.width, y_lock+lock.height+20);
-		ili9488_draw_pixmap(x_lock, y_lock+20, lock.width, lock.height, lock.data);	
+		ili9488_draw_pixmap(x_lock, y_lock, unlocked.width, unlocked.height, unlocked.data);	
 	
 	}
 }
@@ -358,6 +358,7 @@ void print_time(){
 				
 				
 	ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+	font_draw_text(&calibri_36, "Tempo:",x_timer-20, y_timer-50, 2);
 	font_draw_text(&calibri_36, buf,x_timer, y_timer, 2);
 	font_draw_text(&calibri_36,p_primeiro->nome ,50	, 340,2);
 	/*Draw dos icones*/
