@@ -186,7 +186,10 @@ src/main.d src/main.o: ../src/main.c ../src/asf.h \
  ../src/icones/anterior.h ../src/icones/proximo.h ../src/icones/play.h \
  ../src/icones/stop.h ../src/icones/enxague.h ../src/icones/rapido.h \
  ../src/icones/centrifuga.h ../src/icones/diario.h ../src/icones/pesado.h \
- ../src/icones/lock.h ../src/icones/unlocked.h
+ ../src/icones/lock.h ../src/icones/unlocked.h ../src/icones/sp1.h \
+ ../src/icones/sp2.h ../src/icones/sp3.h ../src/icones/sp4.h \
+ ../src/icones/sp5.h ../src/icones/sp6.h ../src/icones/sp7.h \
+ ../src/icones/sp8.h
 
 ../src/asf.h:
 
@@ -605,3 +608,19 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 ../src/icones/lock.h:
 
 ../src/icones/unlocked.h:
+
+../src/icones/sp1.h:
+
+../src/icones/sp2.h:
+
+../src/icones/sp3.h:
+
+../src/icones/sp4.h:
+
+../src/icones/sp5.h:
+
+../src/icones/sp6.h:
+
+../src/icones/sp7.h:
+
+../src/icones/sp8.h:

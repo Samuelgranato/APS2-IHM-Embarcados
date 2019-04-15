@@ -106,6 +106,17 @@
 #define LED_IDX       8u
 #define LED_IDX_MASK  (1u << LED_IDX)
 
+#define LED2_PIO       PIOC
+#define LED2_PIO_ID    ID_PIOC
+#define LED2_IDX       30u
+#define LED2_IDX_MASK  (1u << LED2_IDX)
+
+
+
+#define BUT_PIO		PIOC
+#define BUT_PIO_ID	ID_PIOC
+#define BUT_IDX		31
+#define BUT_IDX_MASK (1u << BUT_IDX)
 	/* IMAGENS DEFINE */
  typedef struct {
 	 const uint8_t *data;
@@ -124,6 +135,15 @@
  #include "icones/pesado.h"
  #include "icones/lock.h"
  #include "icones/unlocked.h"
+ #include "icones/sp1.h"
+ #include "icones/sp2.h"
+ #include "icones/sp3.h"
+ #include "icones/sp4.h"
+ #include "icones/sp5.h"
+ #include "icones/sp6.h"
+ #include "icones/sp7.h"
+ #include "icones/sp8.h"
+ 
 
 
 #define YEAR        2018
@@ -138,14 +158,18 @@ int segundos = 55;
 int	minutos = 0;
 int horas = 0;
 
+int indice_sp=0;
+
 char string_segundos[32];
 char string_minutos[32];
 char string_horas[32];
 
+int timeCount = 0;
 int isRunning = 0;
 int isPressingLock = 0;
 int isPressingLockCount = 0;
 int isLocked = 0;
+int IsDoorOpen=0;
 char test[32];
 
 
@@ -202,6 +226,15 @@ void pin_toggle(Pio *pio, uint32_t mask);
 
 int led_flag = 0;
 
+
+void button_handler(){
+	if(!isRunning){
+		IsDoorOpen=!IsDoorOpen;
+		pin_toggle(LED2_PIO,LED2_IDX_MASK);
+	}
+	
+
+};
 void draw_left_button(uint32_t clicked) {
 	static uint32_t last_state = 255; // undefined
 	if(clicked == last_state) return;
@@ -210,6 +243,9 @@ void draw_left_button(uint32_t clicked) {
 		ili9488_draw_pixmap(play_stop_x,play_stop_y, stop.width, stop.height, stop.data);
 		} else {
 		ili9488_draw_pixmap(play_stop_x,play_stop_y, play.width, play.height, play.data);
+		ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+		ili9488_draw_filled_rectangle(x_timer-20, y_lock, x_lock+16, y_lock+64);
+		
 	}
 	last_state = clicked;
 }
@@ -231,7 +267,42 @@ void draw_mode_icon(){
 		ili9488_draw_pixmap(90,210, pesado.width, pesado.height, pesado.data);
 	}
 }
+void updateSpinner(){
+	switch(indice_sp){
+		case 0:
+			ili9488_draw_pixmap(40, y_lock, sp1.width, sp1.height, sp1.data);
+			break;
+		case 1:
+			ili9488_draw_pixmap(x_timer-20, y_lock, sp2.width, sp2.height, sp2.data);
+			break;
+		case 2:
+			ili9488_draw_pixmap(x_timer-20, y_lock, sp3.width, sp3.height, sp3.data);
+			break;
+		case 3:
+			ili9488_draw_pixmap(x_timer-20, y_lock, sp4.width, sp4.height, sp4.data);
+			break;
+		case 4:
+			ili9488_draw_pixmap(x_timer-20, y_lock, sp5.width, sp5.height, sp5.data);
+			break;
+		case 5:
+			ili9488_draw_pixmap(x_timer-20, y_lock, sp6.width, sp6.height, sp6.data);
+			break;
+		case 6:
+			ili9488_draw_pixmap(x_timer-20, y_lock, sp7.width, sp7.height, sp7.data);	
+			break;	
+		case 7:
+			ili9488_draw_pixmap(x_timer-20, y_lock, sp8.width, sp8.height, sp8.data);
+			break;
+		default:
+			break;
+		
+	}
 
+	indice_sp+=1;
+	if(indice_sp>8){
+		indice_sp=0;
+	}
+}
 void draw_lock(){
 	if(isLocked == 0)	{
 		
@@ -309,6 +380,8 @@ void increment_time(){
 			ili9488_draw_pixmap(proximo_x, proximo_y, proximo.width, proximo.height, proximo.data);
 			ili9488_draw_pixmap(anterior_x, anterior_y, anterior.width, anterior.height, anterior.data);
 			ili9488_draw_pixmap(play_stop_x, play_stop_y, play.width, play.height, play.data);
+			ili9488_set_foreground_color(COLOR_CONVERT(COLOR_WHITE));
+			ili9488_draw_filled_rectangle(x_lock-20, y_lock, x_lock+44, y_lock+64);
 			draw_mode_icon();
 
 			
@@ -394,8 +467,16 @@ void RTT_Handler(void)
 		
 		if(isRunning==1 || isPressingLock)
 			{
-				increment_time();
-				print_time();
+				if(timeCount == 4){
+						increment_time();
+						print_time();
+						
+						timeCount = 0;	
+				}
+				timeCount +=1;
+				
+				updateSpinner();
+			
 			}
 	}
 
@@ -602,6 +683,27 @@ void io_init(void){
 	/* led */
 	pmc_enable_periph_clk(LED_PIO_ID);
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT);
+	
+	pmc_enable_periph_clk(LED2_PIO_ID);
+	pio_configure(LED2_PIO, PIO_OUTPUT_0, LED2_IDX_MASK, PIO_DEFAULT);
+	
+	// Inicializa clock do perif?rico PIO responsavel pelo botao
+	pmc_enable_periph_clk(BUT_PIO_ID);
+	// Configura PIO para lidar com o pino do bot?o como entrada
+	// com pull-up
+	pio_configure(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE);
+	pio_set_debounce_filter(BUT_PIO,BUT_IDX_MASK,20);
+	pio_handler_set(BUT_PIO,
+	BUT_PIO_ID,
+	BUT_IDX_MASK,
+	PIO_IT_FALL_EDGE,
+	button_handler);
+	// Ativa interrup??o
+	pio_enable_interrupt(BUT_PIO, BUT_IDX_MASK);
+	// com prioridade 4 (quanto mais pr?ximo de 0 maior)
+	NVIC_EnableIRQ(BUT_PIO_ID);
+	NVIC_SetPriority(BUT_PIO_ID, 3); // Prioridade 3
+			
 }
 
 uint32_t convert_axis_system_x(uint32_t touch_y) {
@@ -635,17 +737,20 @@ void update_screen(uint32_t tx, uint32_t ty,uint32_t status) {
 				//update left button
 				
 					if(tx >= play_stop_x && tx <= play_stop_x + play.width && ty >= play_stop_y && ty <= play_stop_y + play.height && isLocked == 0) {
-						if(isRunning == 0){
-							pin_toggle(LED_PIO, LED_IDX_MASK);
-							led_flag = 1;
-							isRunning =1;
-							draw_left_button(1);
-						}else{
-							if(isRunning == 1){
+						if(IsDoorOpen){
+							if(isRunning == 0){
 								pin_toggle(LED_PIO, LED_IDX_MASK);
-								led_flag = 0;
-								isRunning = 0;
-								draw_left_button(0);
+								led_flag = 1;
+								isRunning =1;
+								draw_left_button(1);
+							}else{
+								if(isRunning == 1){
+									pin_toggle(LED_PIO, LED_IDX_MASK);
+									led_flag = 0;
+									isRunning = 0;
+								
+									draw_left_button(0);
+								}
 							}
 						}
 					}
@@ -812,7 +917,7 @@ int main(void)
 		   * pllPreScale, cada incremento do RTT leva 500ms (2Hz).
 		   */
 		  uint16_t pllPreScale = (int) (((float) 32768) / 32.0);
-		  uint32_t irqRTTvalue  = 32;
+		  uint32_t irqRTTvalue  = 8;
       
 		  // reinicia RTT para gerar um novo IRQ
 		  RTT_init(pllPreScale, irqRTTvalue);

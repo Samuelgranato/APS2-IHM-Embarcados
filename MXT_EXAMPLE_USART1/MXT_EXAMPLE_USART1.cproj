@@ -724,6 +724,30 @@
     <Compile Include="src\icones\rapido.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\icones\sp1.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\icones\sp2.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\icones\sp3.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\icones\sp4.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\icones\sp5.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\icones\sp6.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\icones\sp7.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\icones\sp8.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\icones\stop.h">
       <SubType>compile</SubType>
     </Compile>
